@@ -1,0 +1,22 @@
+name: "loinc_parts"
+
+reader:
+  files:
+    - "../data/loinc_part_nodes.tsv"
+  format: "csv"
+  delimiter: "\t"
+  header_mode: 0
+  columns:
+    - "id"
+    - "name"
+
+transform: {}
+
+writer:
+  node_properties:
+    - "id"
+    - "category"
+    - "name"
+    - "provided_by"
+  edge_properties: []
+  min_node_count: 3000

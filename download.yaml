@@ -1,0 +1,23 @@
+# Download configuration for loinc-ingest (kghub-downloader).
+# Fully automated — no account-gated sources.
+# kghub-downloader >=0.3.0 expects a top-level LIST of resources (not a `downloads:` map).
+---
+# Full LOINC release table (~104k codes) repackaged by the Tuva Project on public S3.
+# Source of all ClinicalMeasurement *nodes*. Redistribution is permitted under the LOINC
+# license (attribution required). Pinned to a Tuva terminology release via the
+# {TUVA_TERMINOLOGY_VERSION} env var (kghub-downloader interpolates it) for reproducible
+# builds — the justfile defaults it; override to a newer Tuva version or 'latest' to bump.
+# The actual LOINC release version (e.g. 2.80) is derived from the file by versions.py.
+# Official (account-gated) alternative: Loinc.csv from https://loinc.org/downloads/.
+- url: "https://tuva-public-resources.s3.amazonaws.com/versioned_terminology/{TUVA_TERMINOLOGY_VERSION}/loinc.csv_0_0_0.csv.gz"
+  local_name: "data/loinc.csv.gz"
+
+# CompLOINC (loinc/comp-loinc, MIT) — ontologized LOINC in OWL. Source of the is_a
+# hierarchy (LP Part backbone + leaf codes). This v2022-12-05 release is LOINC-only
+# (no SNOMED imports). NOTE the version skew vs the 2.80 node table — see versions.py.
+- url: "https://github.com/loinc/comp-loinc/releases/download/v2022-12-05/merged_reasoned_loinc.owl"
+  local_name: "data/comploinc.owl"
+
+# NOTE: OMOP2OBO (Zenodo, MIT) — source of all *edges* — is NOT listed here. Zenodo
+# returns 403 to kghub-downloader's hardcoded `User-Agent: Mozilla/5.0`, so scripts/preprocess.py
+# fetches it directly (default UA) instead. See OMOP2OBO_URL there.

@@ -1,0 +1,42 @@
+name: "loinc_nodes"
+
+# Full LOINC release table, repackaged by the Tuva Project (public S3, headerless CSV).
+reader:
+  files:
+    - "../data/loinc.csv.gz"
+  format: "csv"
+  delimiter: ","
+  header_mode: "none"
+  columns:
+    - "loinc"
+    - "short_name"
+    - "long_common_name"
+    - "component"
+    - "property"
+    - "time_aspect"
+    - "system"
+    - "scale_type"
+    - "method_type"
+    - "class_code"
+    - "class_description"
+    - "class_type_code"
+    - "class_type_description"
+    - "paneltype"
+    - "order_obs"
+    - "example_units"
+    - "external_copyright_notice"
+    - "status"
+    - "version_first_released"
+    - "version_last_changed"
+
+transform: {}
+
+writer:
+  node_properties:
+    - "id"
+    - "category"
+    - "name"
+    - "deprecated"
+    - "provided_by"
+  edge_properties: []
+  min_node_count: 100000

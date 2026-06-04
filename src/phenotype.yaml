@@ -1,0 +1,31 @@
+name: "loinc_phenotype"
+
+reader:
+  files:
+    - "../data/loinc_phenotype_edges.tsv"
+  format: "csv"
+  delimiter: "\t"
+  header_mode: 0
+  columns:
+    - "subject"
+    - "object"
+    - "result_type"
+    - "negated"
+    - "mapping_category"
+
+transform: {}
+
+writer:
+  node_properties: []
+  edge_properties:
+    - "id"
+    - "category"
+    - "subject"
+    - "predicate"
+    - "object"
+    - "negated"
+    - "primary_knowledge_source"
+    - "aggregator_knowledge_source"
+    - "knowledge_level"
+    - "agent_type"
+  min_edge_count: 10000
