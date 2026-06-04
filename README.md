@@ -5,15 +5,14 @@
 > change — see **Modeling** and **Versioning** below. Not yet a stable production ingest.
 
 [LOINC](https://loinc.org/) (Logical Observation Identifiers Names and Codes) is the universal
-standard for identifying laboratory tests, clinical measurements, and observations. This ingest
-brings LOINC into the graph as a **connected measurement subgraph** — the first-pass / green-field
-fill for the BioData Catalyst (BDC) KG "Measurement" gap, where the graph previously had zero
-clinical-measurement nodes.
+standard for identifying laboratory tests, clinical measurements, and observations.
 
-Each LOINC code becomes a `biolink:ClinicalMeasurement` node, decomposed into **what it measures**
-(OBO ontologies), **what an abnormal result indicates** (HPO phenotypes, by outcome), and **where it
-sits** (an is_a hierarchy). The whole pipeline is automated from freely-redistributable sources —
-no account-gated downloads.
+This ingest provides the **clinical measurement layer for the BioData Catalyst (BDC) knowledge
+graph** (built on the Monarch KG). The BDC KG has a coverage gap for measurement-type concepts —
+it carries no clinical lab / measurement nodes — and this ingest fills that gap: each LOINC code
+becomes a `biolink:ClinicalMeasurement` node, decomposed into **what it measures** (OBO ontologies),
+**what an abnormal result indicates** (HPO phenotypes, by outcome), and **where it sits** (an is_a
+hierarchy). The pipeline is automated from freely-redistributable sources — no account-gated downloads.
 
 - [LOINC](https://loinc.org/) · [OMOP2OBO](https://github.com/callahantiff/OMOP2OBO) · [CompLOINC](https://github.com/loinc/comp-loinc)
 
@@ -28,11 +27,12 @@ are recorded in `output/release-metadata.yaml` (see **Versioning**).
 | **[OMOP2OBO Measurement Mappings](https://zenodo.org/records/6949858)** (Tiffany Callahan) | MIT | the OBO **edges** — analyte/specimen/etc. (ChEBI, UBERON, CL, PR, NCBITaxon) and phenotype (HPO) |
 | **[CompLOINC](https://github.com/loinc/comp-loinc)** — ontologized LOINC in OWL | MIT | the **is_a hierarchy** + the LP-Part / CC-grouper backbone nodes |
 
-Why these, and not the official files: the canonical LOINC table is account-gated, so we use Tuva's
-license-clean repackage; the HPO mappings trace back to **loinc2hpo** (Zhang et al.) but reach us
-already integrated and extended through OMOP2OBO; and rather than build an is_a tree from LOINC's
-gated multiaxial-hierarchy file, we consume CompLOINC, which has already expressed LOINC as an OWL
-ontology with the hierarchy built in.
+These are chosen over the official files for automation and licensing. The canonical LOINC table is
+account-gated, so the node table comes from Tuva's license-clean repackage. The HPO mappings
+originate in **loinc2hpo** (Zhang et al.) but are consumed here already integrated and extended via
+OMOP2OBO. And rather than build an is_a tree from LOINC's gated multiaxial-hierarchy file, the
+hierarchy comes from CompLOINC, which already expresses LOINC as an OWL ontology with the hierarchy
+built in.
 
 ## Shape of the output
 
@@ -156,16 +156,16 @@ Three kinds of concept appear as nodes, and the distinction drives the modeling:
 
 So leaves are the data; LP Parts and CC groupers are the **scaffolding above them** that makes the data
 aggregatable ("show me every enzyme test"). Leaves come from the LOINC table; the scaffolding exists
-only in CompLOINC — which is why we emit those 3,119 backbone nodes ourselves.
+only in CompLOINC, so the ingest emits those 3,119 backbone nodes.
 
 ## Modeling — settled vs. provisional
 
-Node and edge **shapes** are settled; several **semantic** choices are deliberately parked for a
-modeling pass (tracked in `bdc_kg_edge_gaps_plan.md`):
+Node and edge **shapes** are settled; several **semantic** choices are deliberately left provisional
+for a later modeling pass:
 
 - **Node category `ClinicalMeasurement`** — biolink anchors this class to LOINC, but it is an
-  `attribute`, so its `has_attribute_type` slot is required; for a terminology *concept* node we
-  self-reference the LOINC code. Open questions: is `ClinicalMeasurement` right for terminology-as-nodes
+  `attribute`, so its `has_attribute_type` slot is required; for a terminology *concept* node the
+  LOINC code is self-referenced. Open questions: is `ClinicalMeasurement` right for terminology-as-nodes
   (vs. a specific patient measurement)? And is it right for the LP/CC **grouping** nodes, which are
   categories rather than measurements?
 - **Compositional predicate `biolink:related_to`** — *provisional placeholder.* The intended grounding
