@@ -130,7 +130,6 @@ Upstream these are 10,946 rows; the 3,933 Normal/Negative ones are dropped rathe
     - subject (`LOINC:<code>`)
     - predicate (`biolink:correlated_with` or a directional child — provisional; see Modeling)
     - object (`HP:<id>`)
-    - negated (always `false`; see Modeling)
     - primary_knowledge_source (`infores:loinc2hpo`)
     - aggregator_knowledge_source (`["infores:omop2obo"]`)
     - knowledge_level / agent_type (from OMOP2OBO `MAPPING_CATEGORY`)
@@ -199,6 +198,8 @@ for a later modeling pass:
   and the dropped rows stay in `data/loinc_phenotype_edges.tsv`, so restoring them once biolink has a
   result qualifier is a transform-only change — see the
   [modeling proposal](https://gist.github.com/kevinschaper/1f16ae05f15001c28cfa675631923864).
+  With nothing left to negate, the `negated` slot is not emitted at all rather than written as a
+  uniformly-`false` column.
 - **`biolink:subclass_of` (is_a)** — *settled.* This genuinely is the is_a predicate.
 - **Provenance** — `knowledge_level` / `agent_type` are derived per edge: OMOP2OBO's manually-curated
   mappings → `knowledge_assertion` / `manual_agent`; its automatic/similarity tiers and the computed

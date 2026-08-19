@@ -57,7 +57,6 @@ def transform(koza, row: dict) -> list[Association]:
         subject=row["subject"],
         predicate=PREDICATE_BY_RESULT.get(row["result_type"].strip(), FALLBACK_PREDICATE),
         object=row["object"],
-        negated=False,
         primary_knowledge_source="infores:loinc2hpo",
         aggregator_knowledge_source=["infores:omop2obo"],
         knowledge_level=knowledge_level,

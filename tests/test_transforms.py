@@ -84,8 +84,17 @@ def _phenotype_row(**over):
 
 def test_phenotype_abnormal_result_emits_edge():
     (edge,) = phenotype_transform(None, _phenotype_row())
+    assert edge.subject == "LOINC:2345-7"
     assert edge.object == "HP:0003074"
-    assert edge.negated is False
+    assert edge.primary_knowledge_source == "infores:loinc2hpo"
+
+
+def test_phenotype_edges_never_carry_negated():
+    """Only Normal/Negative rows were ever negated, and those are suppressed, so the slot
+    would be uniformly false. It is left unset rather than written as dead weight."""
+    for result_type in ("High", "Low", "Positive"):
+        (edge,) = phenotype_transform(None, _phenotype_row(result_type=result_type))
+        assert edge.negated is None
 
 
 def test_phenotype_result_level_selects_directional_predicate():
