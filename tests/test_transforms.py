@@ -75,11 +75,22 @@ def test_hierarchy_is_a_edge():
     assert edge.primary_knowledge_source == "infores:comploinc"
 
 
-def test_phenotype_edge_negation():
+def test_phenotype_abnormal_result_emits_edge():
     (edge,) = phenotype_transform(None, {
-        "subject": "LOINC:2345-7", "object": "HP:0003074", "result_type": "Normal",
-        "negated": "true", "mapping_category": "Manual One-to-One Concept",
+        "subject": "LOINC:2345-7", "object": "HP:0003074", "result_type": "High",
+        "negated": "false", "mapping_category": "Manual One-to-One Concept",
     })
     assert edge.object == "HP:0003074"
-    assert edge.negated is True
+    assert edge.negated is False
     assert edge.predicate == "biolink:correlated_with"
+
+
+def test_phenotype_normal_result_suppressed():
+    """Normal/Negative rows carry negated=true upstream, where the NOT scopes over the
+    result rather than the subject-predicate-object triple. Emitting them contradicts the
+    High/Low edges the same LOINC code asserts, so they are dropped until a result
+    qualifier can carry the scope."""
+    assert phenotype_transform(None, {
+        "subject": "LOINC:2345-7", "object": "HP:0011015", "result_type": "Normal",
+        "negated": "true", "mapping_category": "Manual One-to-One Concept",
+    }) == []
