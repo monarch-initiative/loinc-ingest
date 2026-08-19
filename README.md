@@ -50,9 +50,10 @@ dehydrogenase [Presence] in Red Blood Cells"* (a G6PD enzyme test on red blood c
      ├─ CL:0000232       erythrocyte                              (specimen cell type)
      └─ NCBITaxon:9606   Homo sapiens                             (organism)
 
-   what an abnormal result means  (biolink:correlated_with — outcome-qualified)
-     ├─ HP:0410189  Increased G6PD level in red blood cells   [result=Positive, negated=false]
-     └─ HP:0410184  Abnormal G6PD level in red blood cells    [result=Negative, negated=true]
+   what an abnormal result means  (biolink:correlated_with family — result-directional)
+     └─ HP:0410189  Increased G6PD level in red blood cells   [result=Positive]
+
+     (the curated Negative row — HP:0410184 "Abnormal G6PD level" — is suppressed; see Modeling)
 
    where it sits  (biolink:subclass_of — is_a)
      └─ LOINC:CC-LP31392-1  "Enzymes Component Class"  ──is_a──▶  LOINC:lc0000001 (root)
@@ -64,7 +65,7 @@ most carry a subset (see coverage notes below).
 
 ### Totals
 
-**107,791 nodes** (104,672 leaf + 3,119 backbone) · **50,700 edges** (15,444 compositional + 10,946 phenotype + 24,310 is_a).
+**107,791 nodes** (104,672 leaf + 3,119 backbone) · **46,767 edges** (15,444 compositional + 7,013 phenotype + 24,310 is_a).
 
 ### Leaf measurement nodes — 104,672
 
@@ -108,20 +109,28 @@ What characteristic the assay measures, split across OBO ontologies by axis. Out
     - aggregator_knowledge_source (`["infores:monarchinitiative"]`)
     - knowledge_level / agent_type (from OMOP2OBO `MAPPING_CATEGORY`; see Modeling)
 
-### Phenotype edges — 10,946
+### Phenotype edges — 7,013
 
-What an abnormal result indicates, as an HPO phenotype. The result interpretation
-(High / Low / Normal / Positive / Negative) selects the HP term and the negation: a Normal/Negative
-result means the phenotype is *absent* (`negated=true`).
+What an abnormal result indicates, as an HPO phenotype. The result interpretation selects both the
+HP term and the predicate:
+
+| result | predicate | edges |
+|---|---|---|
+| High | `biolink:positively_correlated_with` | 3,102 |
+| Low | `biolink:negatively_correlated_with` | 3,101 |
+| Positive | `biolink:correlated_with` | 810 |
+| Normal / Negative | *(suppressed — see Modeling)* | 0 |
+
+Upstream these are 10,946 rows; the 3,933 Normal/Negative ones are dropped rather than emitted.
 
 **Biolink Captured:**
 
 - `biolink:Association`
     - id (random uuid)
     - subject (`LOINC:<code>`)
-    - predicate (`biolink:correlated_with` — provisional; see Modeling)
+    - predicate (`biolink:correlated_with` or a directional child — provisional; see Modeling)
     - object (`HP:<id>`)
-    - negated (`true` for Normal/Negative results)
+    - negated (always `false`; see Modeling)
     - primary_knowledge_source (`infores:loinc2hpo`)
     - aggregator_knowledge_source (`["infores:omop2obo"]`)
     - knowledge_level / agent_type (from OMOP2OBO `MAPPING_CATEGORY`)
@@ -172,10 +181,24 @@ for a later modeling pass:
   is `RO:0009006` *assay measures characteristic* (outcome-independent); biolink has no exact predicate
   yet. The object's category already distinguishes analyte (ChEBI/PR) vs. specimen (UBERON/CL) vs.
   organism (NCBITaxon).
-- **Phenotype predicate `biolink:correlated_with` + `negated`** — *provisional.* There is no biolink
+- **Phenotype predicate — the `biolink:correlated_with` family** — *provisional.* There is no biolink
   predicate for "abnormal-measurement-result indicates phenotype"; a purpose-built one (grounded near
-  the `RO:0020329`–`RO:0020334` "indicates …" family) should be proposed. The result interpretation is
-  preserved in the prep TSV for a future qualifier model.
+  the `RO:0020329`–`RO:0020334` "indicates …" family) should be proposed. `correlated_with`
+  (`RO:0002610`) is the least-wrong canonical fit, and the result level picks a directional child of
+  it — High → `positively_correlated_with`, Low → `negatively_correlated_with`, Positive → the
+  undirected parent. Both children are canonical and both are `is_a: correlated with`, so consumers
+  traversing the parent still match. Usually the direction is already implicit in the curated HP term
+  (High → *Hyperglycemia*, Low → *Hypoglycemia*), but for 404 (subject, object) pairs High and Low
+  land on the **same** term, and the predicate is the only thing keeping them apart.
+- **Normal/Negative results are suppressed, not negated** — *provisional.* Upstream the `NOT` scopes
+  over *"the patient's state, given this result"*; biolink's `negated` scopes over
+  subject–predicate–object. Emitting them asserted that a test is unrelated to a phenotype it also
+  correlates with — 2,573 (subject, object) pairs asserted both ways, often negating a direct parent
+  of a positively-asserted term. Little is lost: 65% of the dropped edges restate a term the same
+  code asserts positively, and 34% point at an ancestor reachable by subclass closure. `result_type`
+  and the dropped rows stay in `data/loinc_phenotype_edges.tsv`, so restoring them once biolink has a
+  result qualifier is a transform-only change — see the
+  [modeling proposal](https://gist.github.com/kevinschaper/1f16ae05f15001c28cfa675631923864).
 - **`biolink:subclass_of` (is_a)** — *settled.* This genuinely is the is_a predicate.
 - **Provenance** — `knowledge_level` / `agent_type` are derived per edge: OMOP2OBO's manually-curated
   mappings → `knowledge_assertion` / `manual_agent`; its automatic/similarity tiers and the computed
