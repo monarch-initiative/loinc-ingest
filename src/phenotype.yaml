@@ -23,7 +23,6 @@ writer:
     - "subject"
     - "predicate"
     - "object"
-    - "negated"
     - "primary_knowledge_source"
     - "aggregator_knowledge_source"
     - "knowledge_level"

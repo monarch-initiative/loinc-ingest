@@ -9,11 +9,28 @@ from biolink_model.datamodel.pydanticmodel_v2 import Association
 
 from _common import provenance
 
-# PROVISIONAL predicate. An abnormal result of a LOINC test indicates an HPO
+# PROVISIONAL predicate family. An abnormal result of a LOINC test indicates an HPO
 # phenotype (e.g. high glucose -> hyperglycemia). biolink has no purpose-built
 # predicate for "abnormal-measurement-result indicates phenotype"; correlated_with
 # (RO:0002610) is the least-wrong canonical fit.
-PREDICATE = "biolink:correlated_with"
+#
+# The result level picks a directional child of it. High means the analyte and the
+# phenotype move together, Low means they move oppositely; both are canonical
+# predicates and both are_a correlated_with, so consumers traversing the parent still
+# match. Mostly the direction is already implicit in the HP term the curator chose
+# (High -> Hyperglycemia, Low -> Hypoglycemia), but for 404 (subject, object) pairs
+# High and Low land on the *same* term, and without this they collapse into one
+# indistinguishable edge.
+#
+# Positive keeps the undirected parent: a presence/absence assay has no direction to
+# encode. Unrecognised result levels fall back to it too -- the parent is always the
+# safe generalisation of whichever child would have applied.
+FALLBACK_PREDICATE = "biolink:correlated_with"
+PREDICATE_BY_RESULT = {
+    "High": "biolink:positively_correlated_with",
+    "Low": "biolink:negatively_correlated_with",
+    "Positive": FALLBACK_PREDICATE,
+}
 
 # Normal/Negative results are dropped rather than emitted with negated=True.
 # Upstream, the NOT scopes over "the patient's state, given this result"; biolink's
@@ -38,9 +55,8 @@ def transform(koza, row: dict) -> list[Association]:
     association = Association(
         id="uuid:" + str(uuid.uuid1()),
         subject=row["subject"],
-        predicate=PREDICATE,
+        predicate=PREDICATE_BY_RESULT.get(row["result_type"].strip(), FALLBACK_PREDICATE),
         object=row["object"],
-        negated=False,
         primary_knowledge_source="infores:loinc2hpo",
         aggregator_knowledge_source=["infores:omop2obo"],
         knowledge_level=knowledge_level,

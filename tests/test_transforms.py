@@ -75,13 +75,44 @@ def test_hierarchy_is_a_edge():
     assert edge.primary_knowledge_source == "infores:comploinc"
 
 
+def _phenotype_row(**over):
+    row = {"subject": "LOINC:2345-7", "object": "HP:0003074", "result_type": "High",
+           "negated": "false", "mapping_category": "Manual One-to-One Concept"}
+    row.update(over)
+    return row
+
+
 def test_phenotype_abnormal_result_emits_edge():
-    (edge,) = phenotype_transform(None, {
-        "subject": "LOINC:2345-7", "object": "HP:0003074", "result_type": "High",
-        "negated": "false", "mapping_category": "Manual One-to-One Concept",
-    })
+    (edge,) = phenotype_transform(None, _phenotype_row())
+    assert edge.subject == "LOINC:2345-7"
     assert edge.object == "HP:0003074"
-    assert edge.negated is False
+    assert edge.primary_knowledge_source == "infores:loinc2hpo"
+
+
+def test_phenotype_edges_never_carry_negated():
+    """Only Normal/Negative rows were ever negated, and those are suppressed, so the slot
+    would be uniformly false. It is left unset rather than written as dead weight."""
+    for result_type in ("High", "Low", "Positive"):
+        (edge,) = phenotype_transform(None, _phenotype_row(result_type=result_type))
+        assert edge.negated is None
+
+
+def test_phenotype_result_level_selects_directional_predicate():
+    """High/Low pick directional children of correlated_with. For the 404 pairs where both
+    result levels map to the same HP term, the predicate is the only thing keeping them apart."""
+    (high,) = phenotype_transform(None, _phenotype_row(object="HP:0032146", result_type="High"))
+    (low,) = phenotype_transform(None, _phenotype_row(object="HP:0032146", result_type="Low"))
+    assert high.predicate == "biolink:positively_correlated_with"
+    assert low.predicate == "biolink:negatively_correlated_with"
+
+
+def test_phenotype_presence_assay_keeps_undirected_predicate():
+    (edge,) = phenotype_transform(None, _phenotype_row(result_type="Positive"))
+    assert edge.predicate == "biolink:correlated_with"
+
+
+def test_phenotype_unknown_result_falls_back_to_parent_predicate():
+    (edge,) = phenotype_transform(None, _phenotype_row(result_type="Indeterminate"))
     assert edge.predicate == "biolink:correlated_with"
 
 
@@ -90,7 +121,5 @@ def test_phenotype_normal_result_suppressed():
     result rather than the subject-predicate-object triple. Emitting them contradicts the
     High/Low edges the same LOINC code asserts, so they are dropped until a result
     qualifier can carry the scope."""
-    assert phenotype_transform(None, {
-        "subject": "LOINC:2345-7", "object": "HP:0011015", "result_type": "Normal",
-        "negated": "true", "mapping_category": "Manual One-to-One Concept",
-    }) == []
+    assert phenotype_transform(None, _phenotype_row(
+        object="HP:0011015", result_type="Normal", negated="true")) == []
