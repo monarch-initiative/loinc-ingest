@@ -47,7 +47,12 @@ fallback-version = "0.0.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "scripts"]
+
+# Pylance/pyright doesn't read pytest's pythonpath, so the test imports of
+# `composition`, `preprocess`, etc. need the same two directories declared here.
+[tool.pyright]
+extraPaths = ["src", "scripts"]
 
 [tool.ruff]
 line-length = 120

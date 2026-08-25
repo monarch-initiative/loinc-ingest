@@ -27,4 +27,4 @@ writer:
     - "aggregator_knowledge_source"
     - "knowledge_level"
     - "agent_type"
-  min_edge_count: 15000
+  min_edge_count: 13000
