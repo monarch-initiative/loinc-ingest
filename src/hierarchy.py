@@ -1,5 +1,4 @@
 import sys
-import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -15,7 +14,6 @@ PREDICATE = "biolink:subclass_of"
 @koza.transform_record()
 def transform(koza, row: dict) -> list[Association]:
     association = Association(
-        id="uuid:" + str(uuid.uuid1()),
         subject=row["subject"],
         predicate=PREDICATE,
         object=row["object"],
