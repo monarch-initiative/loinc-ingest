@@ -1,5 +1,4 @@
 import sys
-import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -53,7 +52,6 @@ def transform(koza, row: dict) -> list[Association]:
 
     knowledge_level, agent_type = provenance(row["mapping_category"])
     association = Association(
-        id="uuid:" + str(uuid.uuid1()),
         subject=row["subject"],
         predicate=PREDICATE_BY_RESULT.get(row["result_type"].strip(), FALLBACK_PREDICATE),
         object=row["object"],

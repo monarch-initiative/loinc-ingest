@@ -1,5 +1,4 @@
 import sys
-import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -22,7 +21,6 @@ PREDICATE = "biolink:related_to"
 def transform(koza, row: dict) -> list[Association]:
     knowledge_level, agent_type = provenance(row["mapping_category"])
     association = Association(
-        id="uuid:" + str(uuid.uuid1()),
         subject=row["subject"],
         predicate=PREDICATE,
         object=row["object"],
